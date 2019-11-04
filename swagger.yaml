@@ -1,0 +1,202 @@
+swagger: '2.0'
+info:
+  description: SMS-IO API V1
+  version: 1.0.0
+  title: SMS-IO.RU
+  termsOfService: http://sms-io.ru/terms/
+  contact:
+    email: apiteam@sms-io.ru
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+host: api.sms-io.ru
+basePath: /sms-api/v1
+tags:
+  - name: message
+    description: Send/Receive SMS
+    externalDocs:
+      description: Find out more
+      url: https://docs.sms-io.ru
+schemes:
+  - https
+  - http
+paths:
+  /message/:
+    get:
+      tags:
+        - message
+      summary: Get messages
+      description: Get user messages - returns paganated list of user messages
+      operationId: getMessages
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: page
+          in: query
+          description: page number
+          required: false
+          type: integer
+          format: int32
+        - name: page_size
+          in: query
+          description: max records per page
+          required: false
+          type: integer
+          minimum: 1
+          maximum: 1000
+          format: int32
+        - name: ordering
+          in: query
+          description: set ordering for messages
+          required: false
+          type: array
+          collectionFormat: csv
+          items:
+            type: string
+            enum:
+              - "external_id"
+              - "-external_id"
+              - "to_number"
+              - "-to_number"
+              - "status"
+              - "-status"
+              - "created_at"
+              - "-created_at"
+
+      responses:
+        200:
+          description: Paginated response
+          schema:
+            $ref: '#/definitions/PaginatedResponseMessageData'
+      security:
+        - api_token: []
+    post:
+      tags:
+        - message
+      summary: Send a new message
+      description: Post a message to send immediately
+      operationId: sendMessage
+      consumes:
+        - application/json
+      produces:
+      - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Message object that needs to be sent
+          required: true
+          schema:
+            $ref: '#/definitions/RequestMessageData'
+      responses:
+        200:
+          description: New message info
+          schema:
+            $ref: '#/definitions/ResponseMessageData'
+        400:
+          description: Api validation error
+          schema:
+            $ref: '#/definitions/ApiError'
+      security:
+      - api_token: []
+  /message/{messageId}/:
+    get:
+      tags:
+        - message
+      summary: Get message by ID
+      description: Returns a mesasge details data
+      operationId: getMessageById
+      produces:
+        - application/json
+      parameters:
+        - name: messageId
+          in: path
+          description: ID or external ID of message to return
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: '#/definitions/ResponseMessageData'
+        404:
+          description: Message not found
+      security:
+        - api_token: []
+
+securityDefinitions:
+  api_token:
+    type: apiKey
+    name: Authorization
+    in: header
+definitions:
+  RequestMessageData:
+    type: object
+    required:
+      - external_id
+      - to_number
+      - text
+    properties:
+      external_id:
+        type: string
+      to_number:
+        type: string
+        format: E164
+      text:
+        type: string
+        maxLength: 70
+      project_alias:
+        type: string
+        description: The user can pass the project's alias for which this message is sent, if not passed - the `default` will be used
+        default: default
+  ResponseMessageData:
+    type: object
+    properties:
+      external_id:
+        type: string
+      to_number:
+        type: string
+      message_id:
+        type: string
+        format: uuid
+      status:
+        type: string
+        default: New
+        enum:
+          - New
+          - Ready
+          - Queued
+          - Transmitted
+          - Received
+          - Sent
+          - Error
+          - Delivery
+      created_at:
+        type: string
+        format: date-time
+      project_alias:
+        type: string
+  PaginatedResponseMessageData:
+    type: object
+    properties:
+      count:
+        type: integer
+      next:
+        type: string
+      previous:
+        type: string
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/ResponseMessageData'
+  ApiError:
+    type: object
+    additionalProperties:
+      type: array
+      items:
+        type: string
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
