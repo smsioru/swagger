@@ -1,14 +1,11 @@
 swagger: '2.0'
 info:
   description: SMS-IO API V1
-  version: 1.0.0
+  version: 1.1.0
   title: SMS-IO.RU
-  termsOfService: http://sms-io.ru/terms/
+  termsOfService: https://www.sms-io.ru/#/user-agreement/
   contact:
     email: apiteam@sms-io.ru
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
 host: api.sms-io.ru
 basePath: /sms-api/v1
 tags:
@@ -16,10 +13,9 @@ tags:
     description: Send/Receive SMS
     externalDocs:
       description: Find out more
-      url: https://docs.sms-io.ru
+      url: https://github.com/smsioru/simple/wiki/SMS-IO.RU-API-Documentation
 schemes:
   - https
-  - http
 paths:
   /message/:
     get:
@@ -85,8 +81,8 @@ paths:
       parameters:
         - in: body
           name: body
-          description: Message object that needs to be sent
           required: true
+          description: Message object that needs to be sent
           schema:
             $ref: '#/definitions/RequestMessageData'
       responses:
@@ -144,13 +140,21 @@ definitions:
       to_number:
         type: string
         format: E164
+        description: Phone number in E164 format eg +70000000000
       text:
         type: string
         maxLength: 70
       project_alias:
         type: string
-        description: The user can pass the project's alias for which this message is sent, if not passed - the `default` will be used
+        description: The user can pass the project's alias for which this message is sent,
+                     if not passed - the `default` will be used
         default: default
+      ttl_in_seconds:
+        type: number
+        minimum: 3600
+        maximum: 259200
+        description: Time to life for message
+        default: 259200
   ResponseMessageData:
     type: object
     properties:
@@ -173,11 +177,14 @@ definitions:
           - Sent
           - Error
           - Delivery
+          - Expired
       created_at:
         type: string
         format: date-time
       project_alias:
         type: string
+      ttl_in_seconds:
+        type: number
   PaginatedResponseMessageData:
     type: object
     properties:
